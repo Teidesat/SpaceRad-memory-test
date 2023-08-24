@@ -1,6 +1,6 @@
 # TEIDESAT-I Radiation memory experiment
 
-Testing the radiation resistance of a FRAM, MRAM, NAND, NOR and EEPROM is one of the objectives of the cubesat TEIDESAT-I. This is part of the arduino sketch suite for the experiment. Testing all the memories is done in the main sketch, while specific memory connections are tested on specific sketches.
+Testing the radiation resistance of a FRAM, MRAM, NAND, NOR and EEPROM is one of the objectives of the cubesat TEIDESAT-I. The objective is to verify that the memories are in a failureless operational state. This is part of the arduino sketch suite for the experiment. Testing all the memories is done in the main sketch, while specific memory connections are tested on specific sketches.
 
 # Breakout board
 
