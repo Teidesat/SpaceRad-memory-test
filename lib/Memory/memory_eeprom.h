@@ -7,7 +7,12 @@
  * 
  * @copyright Copyright (c) 2023
  * 
- * Because it is SPI based, the pins are the following:
+ * The following information comes from the datasheet:
+ * https://www.mouser.es/datasheet/2/389/m95m02_a125-1849907.pdf
+ * from the webpage:
+ * https://www.mouser.es/ProductDetail/STMicroelectronics/M95M02-DWMN3TP-K?qs=Ok1pvOkw6%2Fr65R3s1i3vIw%3D%3D
+ * 
+ * 1.- Because it is SPI based, the pins are the following:
  *    Supply voltage,
  *    Ground,
  *    Serial Clock,
@@ -17,13 +22,13 @@
  *    Serial Input,
  *    Serial Output
  *
- * Clock polarity and clock phase required for the SPI communication:
+ * 2.- Clock polarity and clock phase required for the SPI communication:
  *  CPOL=0, CPHA=0 or
  *  CPOL=0, CPHA=1
  * Make sure to configure SPI on either. Clock stays on 0 or 1 when
  * master (esp32 probably) is in stand-by-mode and not transfering data.
  *
- * Memory operations are done by commands:
+ * 3.- Memory operations are done by commands:
  *  - WRITE, WRSR, WRID, LID...
  *  - READ, RDSR, RDID, RDLS...
  *  etc...
@@ -44,7 +49,7 @@
  * are given as multiples of 8 bits. Data is being output until chip select is
  * set back to 1.
  *
- * There is a 1 byte status register:
+ * 4.- There is a 1 byte status register:
  * SRWD - 0 - 0 - 0 - BP1 - BP2 - WEL - WIP
  *
  * WIP = 1 means a write cycle of write command is in progress, 0 otherwise.
@@ -73,17 +78,37 @@
  *    1     |   0      | Status Register is write-protected.
  * Depending on BP1, BP0, the protected addresses vary.
  *
- * There is also an identification page on the EEPROM:
+ * 5.- There is also an identification page on the EEPROM:
  * id (3 bytes) - app params. (rest, could be used for app. data)
  * Id. field contains ST Manufactorer code, SPI Family Code, Memory Density Code.
+ *
+ * 6.- Instructions
+ * 
+ * An instruction is made up of an OPCODE followed by 3 bytes used for addresses.
+ * Which bits are relevant on the adress depends on the opcode. It is important
+ * to understand that the first bit transmitted is the most significant, in this
+ * case the opcode will be received by the EEPROM first.
+ * 
+ * Instruction   | Upper address byte   |  Middle address byte    |  Lower address byte
+ *  (1 byte)     | b23 b22 ... b17 b16  |  b15 b14 ... b10 b9 b8  |  b7  b6  ... b2 b1 b0
+ *
+ * READ or WRITE | x x ...     A17 A16  |  A15 A14 ... A10 A9 A8  |  A7 A6 ... A1 A0
+ * RDID or WRID  | 0 0 ...     0   0    |  0   0  ...  0   0  0    |  A7 A6 ... A1 A0
+ * RDLS or LID   | 0 0 ...     0   0    |  0   0  0 0 0 1 0  0    |  0 0   ... 0  0
+ * 
+ * x = irrelevant bit
+ * A = relevant bit
+ * 
+ * Check the previously mentioned datasheet for a great explanation on the
+ * sequences for each instruction.
  */
 
 #pragma once
 
-class MEMORYEEPROM {
+class MemoryEEPROM {
 public:
-  MEMORYEEPROM() {}
-  ~MEMORYEEPROM() {}
+  MemoryEEPROM() {}
+  ~MemoryEEPROM() {}
   
   bool detected();
 
