@@ -4,14 +4,14 @@
  * @brief Meant for a EEPROM SPI. Model: M95M02-DWMN3TP/K
  * @version 0.1
  * @date 2023-08-24
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  * The following information comes from the datasheet:
  * https://www.mouser.es/datasheet/2/389/m95m02_a125-1849907.pdf
  * from the webpage:
  * https://www.mouser.es/ProductDetail/STMicroelectronics/M95M02-DWMN3TP-K?qs=Ok1pvOkw6%2Fr65R3s1i3vIw%3D%3D
- * 
+ *
  * 1.- Because it is SPI based, the pins are the following:
  *    Supply voltage,
  *    Ground,
@@ -22,7 +22,13 @@
  *    Serial Input,
  *    Serial Output
  *
- * 2.- Clock polarity and clock phase required for the SPI communication:
+ * 2.- SPI configuration:
+ *
+ * Transmission speed must be set to either 10 MHz (10000000 on SPIConfig object) or
+ * 5 MHz depending on power voltage. If greater than 2.5V then set 5MHz, on the
+ * other han, if greater than 4.5V then set 10MHz.
+ * 
+ * Clock polarity and clock phase required for the SPI communication:
  *  CPOL=0, CPHA=0 or
  *  CPOL=0, CPHA=1
  * Make sure to configure SPI on either. Clock stays on 0 or 1 when
@@ -67,7 +73,7 @@
  * BP1  BP0 | Protected block | Protected array addresses
  *   0    0 |       None      |          None
  *   0    1 |   Upper quarter |      3000h - 3FFFFh
- *   1    0 |     Upper half  |       2000h - 3FFFFh
+ *   1    0 |     Upper half  |      2000h - 3FFFFh
  *   1    1 |   Whole memory  |  0000h - 3FFFFh plus Identification page
  *
  * SRWD and Write Protect work together:
@@ -105,18 +111,102 @@
 
 #pragma once
 
+#include <stdint.h> // to avoid uint8_t unknown type syntax highlight error
+#include <array>
+
 class MemoryEEPROM {
 public:
   MemoryEEPROM() {}
   ~MemoryEEPROM() {}
   
-  bool detected();
+  /**
+   * @brief Check if the WEL flag in the status register is at 1 (allow
+   * write instructions) or at 0 (dissallow write instructions)
+   * 
+   * @return true if WEL = 1
+   * @return false if WEL = 0
+   */
+  bool isWriteEnabled();
 
   /**
-   * @brief 
+   * @brief Status register has a WEL flag that at 1 allows memory to be written,
+   * but at 0 it does not allow it. This changes the flag to 1.
    * 
+   * Note: when the memory is busy writing something, a read cannot be performed,
+   * but the status register can always be read, so this method cannot fail.
    */
-  void setup();
+  void enableWrite();
+
+  /**
+   * @brief Status register has a WEL flag that at 1 allows memory to be written,
+   * but at 0 it does not allow it. This changes the flag to 0.
+   * 
+   * Note: when the memory is busy writing something, a read cannot be performed,
+   * but the status register can always be read, so this method cannot fail.
+   */
+  void disableWrite();
+
+  /**
+   * @brief The memory can be in a write cycle, which means that a read
+   * instruction cannot be executed.
+   * 
+   * @return true if memory is in a write cycle
+   * @return false if memory is not in a write cycle
+   */
+  bool isBusy();
+
+  /**
+   * @brief read a single byte.
+   * 
+   * Note: when the memory is busy writing something, a read cannot be performed,
+   * so make sure to check if memory is busy beforehand.
+   * 
+   * @param address lower than 2^18, since the eeprom's memory array is of
+   *  256 Kbyte.
+   * @pre 0 <= address <= 2^18 - 1
+   */
+  uint8_t readByte(int address);
+
+  /**
+   * @brief read a page.
+   * 
+   * In this EEPROM, pages are of size 256 byte.
+   * 
+   * Note: when the memory is busy writing something, a read cannot be performed,
+   * so make sure to check if memory is busy beforehand.
+   * 
+   * @param lowestAddress lower than (2^18 - 255), since the eeprom's memory
+   * array is of 256 Kbyte, and the address is incremented 255 times to be able
+   * to read the whole 256 byte page.
+   * @pre 0 <= lowestAddress <= ((2^18 - 1) - 255)
+   */
+  std::array<uint8_t, 256> readPage(int lowestAddress);
+
+  /**
+   * @brief Write a byte.
+   * 
+   * Note: write needs to be enabled for the instruction to take effect.
+   * 
+   * @param address lower than 2^18, since the eeprom's memory array is of
+   *  256 Kbyte.
+   * @pre 0 <= address <= 2^18 - 1
+   */
+  void writeByte(int address);
+
+  /**
+   * @brief write a page with a single internal Write cycle.
+   * 
+   * In this EEPROM, pages are of size 256 byte.
+   * 
+   * Note: write needs to be enabled for the instruction to take effect.
+   * 
+   * @param content bytes that will substitute the old bytes in memory. 
+   * @param lowestAddress lower than (2^18 - 255), since the eeprom's memory
+   * array is of 256 Kbyte, and the address is incremented 255 times to be able
+   * to read the whole 256 byte page.
+   * @pre 0 <= lowestAddress <= ((2^18 - 1) - 255)
+   */
+  void writePage(std::array<uint8_t, 256> content, int lowestAddress);
 
 private:
 };
