@@ -136,7 +136,7 @@
 // #define RDLS 131
 // #define LID 130
 
-#define SPI_TRANSFER_SPEED_EEPROM 5000000 // 5 Hz assuming 3.3 V
+#define SPI_TRANSFER_SPEED_EEPROM 5000000 // 5 MHz assuming 3.3 V
 
 class MemoryEEPROM {
 public:
