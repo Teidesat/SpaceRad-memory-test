@@ -64,17 +64,17 @@ void MemoryEEPROM::waitUntilReady() {
 
 uint8_t MemoryEEPROM::readByte(uint32_t address) {
   if (address > 262143) {
-    Serial.print("Error: Invalid address passed to EEPROM'S readByte(address).");
+    Serial.println("Error: Invalid address passed to EEPROM'S readByte(address).");
     return 0;
   }
   uint8_t memoryOutputByte = 0;
-  transferNBytes(READ_EEPROM, address, &memoryOutputByte, 256);
+  transferNBytes(READ_EEPROM, address, &memoryOutputByte, 1);
   return memoryOutputByte;
 }
 
 std::array<uint8_t, 256> MemoryEEPROM::readPage(uint32_t lowestAddress) {
   if (lowestAddress > 261888) {
-    Serial.print("Error: Invalid lowestAddress passed to EEPROM'S readPage(lowestAddress).");
+    Serial.println("Error: Invalid lowestAddress passed to EEPROM'S readPage(lowestAddress).");
     return {};
   }
   std::array<uint8_t, 256> memoryOutputPage = {};
@@ -82,20 +82,26 @@ std::array<uint8_t, 256> MemoryEEPROM::readPage(uint32_t lowestAddress) {
   return memoryOutputPage;
 }
 
+// TODO: check if write enable can apply wwhen memory is not busy or not,
+// in which case an additional check for isBusy() is required beforehand.
 void MemoryEEPROM::writeByte(uint8_t byteToWrite, uint32_t address) {
   if (address > 262143) {
-    Serial.print("Error: Invalid address passed to EEPROM'S writeByte(byteToWriet, address).");
+    Serial.println("Error: Invalid address passed to EEPROM'S writeByte(byteToWriet, address).");
     return;
   }
+  enableWrite();
   transferNBytes(WRITE_EEPROM, address, &byteToWrite, 1);
 }
 
+// TODO: check if write enable can apply wwhen memory is not busy or not,
+// in which case an additional check for isBusy() is required beforehand.
 void MemoryEEPROM::writePage(std::array<uint8_t, 256> content,
     uint32_t lowestAddress) {
   if (lowestAddress > 261888) {
-    Serial.print("Error: Invalid lowestAddress passed to EEPROM'S writePage(content, address).");
+    Serial.println("Error: Invalid lowestAddress passed to EEPROM'S writePage(content, address).");
     return;
   }
+  enableWrite();
   transferNBytes(WRITE_EEPROM, lowestAddress, &content[0], 256);
 }
 
