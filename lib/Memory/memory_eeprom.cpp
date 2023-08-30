@@ -68,7 +68,7 @@ uint8_t MemoryEEPROM::readByte(uint32_t address) {
     return 0;
   }
   uint8_t memoryOutputByte = 0;
-  transferNBytes(READ_EEPROM, address, &memoryOutputByte, 256);
+  transferNBytes(READ_EEPROM, address, &memoryOutputByte, 1);
   return memoryOutputByte;
 }
 

@@ -251,7 +251,7 @@ public:
    * @pre 0 <= address <= 2^20 - 1
    * @pre Region to write at is not protected.
    */
-  void writeNBytes(uint8_t buffer, int size, uint32_t initialAddress);
+  void writeNBytes(uint8_t* buffer, int size, uint32_t initialAddress);
 
   // Consecutive reads. there is a fast-read instruction version that
   // adds a dummy byte that cannot be 1010XXXX, so 5 bytes total instead
