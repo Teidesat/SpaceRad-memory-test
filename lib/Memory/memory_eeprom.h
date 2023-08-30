@@ -22,6 +22,9 @@
  *    Serial Input,
  *    Serial Output
  *
+ * When HOLD is 0 the memory goes into stand-by mode and the output
+ * stays at high impendance, whiel also ignoring input from the bus.
+ *
  * #### SPI configuration:
  *
  * Transmission speed must be set to either 10 MHz (10000000 on SPIConfig object) or
@@ -32,7 +35,7 @@
  *  CPOL=0, CPHA=0 or
  *  CPOL=0, CPHA=1
  * Make sure to configure SPI on either. Clock stays on 0 or 1 when
- * master (esp32 probably) is in stand-by-mode and not transfering data.
+ * master is in stand-by-mode and not transfering data.
  *
  * #### Memory operations are done by commands:
  *  - WRITE, WRSR, WRID, LID...
@@ -43,13 +46,12 @@
  *
  * Chip select must be 1 before a write command. It has to be first
  * set to 0, and then a WREN (Write Enable) command must be first executed.
- * After each byte data boundary input, the Chip select must be put back to 1.
- * In other words, chip select changes a lot during write commands.
+ * When aiming to end an instruction, Chip select must be put back to 1.
  *
- * A write command can be canceled at any time by turning chip select to 1. But
- * it will only take effect by 1 byte boundaries, which means that if 3 bits have
- * been counted so far on the input pin, then the write command will stop
- * when 8 bits have been counted.
+ * A write instruction can be canceled at any time by turning chip select to 1.
+ * But it will only take effect by 1 byte boundaries, which means that if 3 bits
+ * have been counted so far on the input pin, then the write instruction will
+ * stop when 8 bits have been counted.
  *
  * For read commands, Chip select is set to 0 from 1, then instruction and address
  * are given as multiples of 8 bits. Data is being output until chip select is
@@ -77,7 +79,7 @@
  *   1    1 |   Whole memory  |  0000h - 3FFFFh plus Identification page
  *
  * SRWD and Write Protect work together:
- * Table 4. Protection modes:
+ * Table: Protection modes:
  * SRWD bit | W signal |   Status
  *    0     |   X      | Status Register is writable.
  *    1     |   1      | Status Register is write-protected.
@@ -226,8 +228,6 @@ public:
   /**
    * @brief Write a byte.
    * 
-   * Note: write needs to be enabled for the instruction to take effect.
-   * 
    * @param uint8_t byteToWrite
    * @param address lower than 2^18, since the eeprom's memory array is of
    *  256 Kbyte.
@@ -242,8 +242,6 @@ public:
    * 
    * In this EEPROM, pages are of size 256 byte.
    * 
-   * Note: write needs to be enabled for the instruction to take effect.
-   * 
    * @param content bytes that will substitute the old bytes in memory. 
    * @param lowestAddress lower than (2^18 - 255), since the eeprom's memory
    * array is of 256 Kbyte, and the address is incremented 255 times to be able
@@ -257,6 +255,6 @@ public:
 private:
   // because readByte, readPage, writeByte, writePage are similar and will
   // likely stay similar. So this is a auxiliary function for them.
-  void transferNBytes(uint8_t opcode, uint32_t address, byte* buffer,
+  void transferNBytes(uint8_t opcode, uint32_t address, uint8_t* buffer,
       int amountOfBytes);
 };
