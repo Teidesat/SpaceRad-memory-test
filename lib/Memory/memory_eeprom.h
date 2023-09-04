@@ -92,10 +92,10 @@
  *
  * #### Instructions
  * 
- * An instruction is made up of an OPCODE followed by 3 bytes used for addresses.
- * Which bits are relevant on the adress depends on the opcode. It is important
- * to understand that the first bit transmitted is the most significant, in this
- * case the opcode will be received by the EEPROM first.
+ * An instruction is made up of an OPCODE followed by address or dummy bytes
+ * depending on the specific instruction.It is important to understand that
+ * the first bit transmitted is the most significant, in this case the opcode
+ * will be received by the NAND Flash first.
  *
  * Instruction   | Upper address byte   |  Middle address byte    |  Lower address byte
  *  (1 byte)     | b23 b22 ... b17 b16  |  b15 b14 ... b10 b9 b8  |  b7  b6  ... b2 b1 b0
