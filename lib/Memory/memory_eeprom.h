@@ -191,14 +191,14 @@ public:
   /**
    * @brief The memory can be in a write cycle, which means that a non status
    * register related instruction cannot be executed. This sends an instruction
-   * for status register read continously to check on the WIP flag continually
-   * until it is found to be equal to 0 (ready for instruction).
+   * for status register read continuously to check on the WIP flag continually
+   * until it is found to be equal to 0 (ready for next instruction).
    *
    */
   void waitUntilReady();
 
   /**
-   * @brief read a single byte.
+   * @brief read a single byte. Most significant is read first.
    * 
    * Note: when the memory is busy writing something, a read cannot be performed,
    * so make sure to check if memory is busy beforehand.
@@ -211,7 +211,7 @@ public:
   uint8_t readByte(uint32_t address);
 
   /**
-   * @brief read a page.
+   * @brief read a page. Most significant is read first.
    * 
    * In this EEPROM, pages are of size 256 byte.
    * 

@@ -196,7 +196,7 @@ public:
   void disableWrite();
 
   /**
-   * @brief Read a single byte.
+   * @brief Read a single byte. Most significant is read first.
    * 
    * @param address lower than 2^20, since the eeprom's memory array is of
    *  8 MBit.
@@ -206,7 +206,7 @@ public:
 
   /**
    * @brief Read N consecutive bytes by incrementing an initialAddress
-   *    N times.
+   *    N times. Most significant is read first.
    *
    * @param initialAddress lower than 2^20, since the FRAM's memory
    *  array is of 8 MBit. If initialAddress + size > 2^20 then a reset
@@ -258,7 +258,7 @@ public:
   // of 4 to execute that instruction.
   // TODO: void fastRead(...);
 private:
-  // because readByte, readPage, writeByte, writePage are similar and will
+  // because readByte, readNBytes, writeByte, writeNBytes are similar and will
   // likely stay similar. So this is a auxiliary function for them.
   void transferNBytes(uint8_t opcode, uint32_t address, uint8_t* buffer,
       int amountOfBytes);

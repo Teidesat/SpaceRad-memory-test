@@ -125,9 +125,9 @@
  *    within block. Stops after page fully read (output line to high impedance).
  * BUFF = 1 means Continuos Read Mode; full page read independently of the byte
  *    address within block. Next page after finish current page.
- * 
+ *
  * ### SR-3 (Status Only Register)
- * 
+ *
  * (R)* - LUT-F - ECC-1 - ECC-0 - P-FAIL - E-FAIL - WEL - BUSY
  * *(R) = reserved
  * 
@@ -192,15 +192,15 @@
 // lines for all the memories to use.
 
 // opcodes
-// WIP
-#define WREN_NAND_FLASH 6
-#define WRDI_NAND_FLASH 4
-#define RDSR_NAND_FLASH 5
-#define WRSR_NAND_FLASH 1
-#define READ_NAND_FLASH 3
-#define WRITE_NAND_FLASH 2
-#define SLEEP_NAND_FLASH 185
-#define WAKE_NAND_FLASH 171
+// WIP not updated, don't use.
+// #define WREN_NAND_FLASH 6
+// #define WRDI_NAND_FLASH 4
+// #define RDSR_NAND_FLASH 15
+// #define WRSR_NAND_FLASH 1
+// #define READ_NAND_FLASH 3
+// #define WRITE_NAND_FLASH 2
+// #define SLEEP_NAND_FLASH 185
+// #define WAKE_NAND_FLASH 171
 
 #define SPI_TRANSFER_SPEED_NAND_FLASH 104000000 // 104 MHz
 
@@ -228,7 +228,7 @@ public:
   void enableWrite();
 
   /**
-   * @brief Status register has a WEL flag that at 1 allows memory to be written,
+   * @brief Status register 3 has a WEL flag that at 1 allows memory to be written,
    * but at 0 it does not allow it. This changes the flag to 0.
    * 
    * Makes no effect on current write cycle; it will be successfuly finished,
@@ -238,40 +238,61 @@ public:
   void disableWrite();
 
   /**
-   * @brief Read a single byte.
+   * @brief The memory can be in an operation cycle, which means that a non status
+   * register related instruction cannot be executed.
+   *
+   * This can be used to know when an operation has ended by continously calling it
+   * while checking the busy flag in Status Register 3.
+   *
+   * @return true if memory is in an operation cycle
+   * @return false if memory is not in an operation cycle
+   */
+  bool isBusy();
+
+  /**
+   * @brief The memory can be in a write cycle, which means that a non status
+   * register related instruction cannot be executed. This sends an instruction
+   * for status register read continuously to check on the BUSY flag continually
+   * until it is found to be equal to 0 (ready for next instruction).
+   */
+  void waitUntilReady();
+
+  /**
+   * @brief Read a single byte. Most significant is read first.
    * 
-   * @param address lower than 2^20, since the eeprom's memory array is of
-   *  8 MBit.
-   * @pre 0 <= address <= 2^20 - 1
+   * Puts the memory in Continuous mode and reads.
+   *
+   * @param address lower than 2^27, since the eeprom's memory array is of
+   *  1 GBit.
+   * @pre 0 <= address <= 2^27 - 1
    */
   uint8_t readByte(uint32_t address);
 
   /**
    * @brief Read N consecutive bytes by incrementing an initialAddress
-   *    N times.
+   *    N times. Most significant is read first.
    *
-   * @param initialAddress lower than 2^20, since the FRAM's memory
-   *  array is of 8 MBit. If initialAddress + size > 2^20 then a reset
+   * @param initialAddress lower than 2^27, since the NAND's memory
+   *  array is of 1 GBit. If initialAddress + size > 2^27 then a reset
    *  to 0 takes place and it keeps going from there.
-   * @param buffer destination of the bytes being read from the FRAM.
+   * @param buffer destination of the bytes being read from the NAND.
    * @param size amount of bytes to read.
-   * @pre 0 <= initialAddress <= 2^20 - 1
+   * @pre 0 <= initialAddress <= 2^27 - 1
    */
   void readNBytes(uint32_t initialAddress, uint8_t* buffer, int size);
 
   /**
    * @brief Write a byte.
    * 
-   * Note: write needs to be enabled for the instruction to take effect.
-   * 
-   * Also, if power goes down, the last incompleted byte to write will be lost.
+   * Note: write needs to be enabled for the instruction to take effect. Write
+   * is automatically disabled after each write related instruction.
    *
    * @param uint8_t byteToWrite
    * @param address lower than 2^20, since the eeprom's memory array is of
    *  8 MBit.
-   * @pre 0 <= address <= 2^20 - 1
+   * @pre 0 <= address <= 2^27 - 1
    * @pre Write is enabled
-   * @pre Region to write at is not protected.
+   * @pre Region to write at is not protected or locked.
    */
   void writeByte(uint8_t byteToWrite, uint32_t address);
 
@@ -282,18 +303,17 @@ public:
    * Note: due to the bus being most significant first, then write most
    *    significant first.
    * 
-   * Also, if power goes down, the last incompleted byte to write will be lost.
-   * 
-   * Note: write needs to be enabled for the instruction to take effect.
-   * 
+   * Note: write needs to be enabled for the instruction to take effect. Write
+   * is automatically disabled after each write related instruction.
+   *
    * @param buffer bytes that will substitute the old bytes in memory.
    * @param size amount of bytes to write.
-   * @param initialAddress lower than 2^20, since the FRAM's memory
-   *  array is of 8 MBit. If initialAddress + size > 2^20 then a reset
+   * @param initialAddress lower than 2^27, since the NAND's memory
+   *  array is of 1 GBit. If initialAddress + size > 2^27 then a reset
    *  to 0 takes place and it keeps going from there.
-   * @pre 0 <= address <= 2^20 - 1
+   * @pre 0 <= address <= 2^27 - 1
    * @pre Write is enabled
-   * @pre Region to write at is not protected.
+   * @pre Region to write at is not protected or locked.
    */
   void writeNBytes(uint8_t* buffer, int size, uint32_t initialAddress);
 
