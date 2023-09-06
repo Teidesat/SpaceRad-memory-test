@@ -37,4 +37,4 @@ the datasheet (8.2.26) mentions that all instructions will be done in buffer mod
  
  - In [NAND Flash](lib/Memory/memory_nand_flash.h), check if write enable and write status register instructions can be executed anytime. 6/9/2023
 
- - In [NAND Flash](lib/Memory/memory_nand_flash.h), confirm whether <code>eraseBlock</code> does indeed erase the block associated with the addressed page.
+ - In [NAND Flash](lib/Memory/memory_nand_flash.h), confirm whether <code>eraseBlock</code> does indeed erase the block associated with the addressed page. 6/9/2023
