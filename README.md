@@ -1,6 +1,6 @@
 # TEIDESAT-I Radiation memory experiment
 
-Testing the radiation resistance of a FRAM, MRAM, NAND Flash, NOR Flash and EEPROM is one of the objectives of the cubesat TEIDESAT-I. The objective is to verify that the memories are in a failureless operational state.
+Testing the radiation resistance of a FRAM, MRAM, NAND Flash, NOR Flash and EEPROM is one of the experiments of the cubesat TEIDESAT-I; the objective is to verify that the memories are in a failureless operational state.
 
 ## Breakout board
 
