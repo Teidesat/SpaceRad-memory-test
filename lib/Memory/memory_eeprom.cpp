@@ -6,16 +6,18 @@
 /**
  * WEL flag is second from the right on the byte word of the status register,
  * so apply a mask to the status register accordingly.
+ *
+ * dummy data 0x00 is passed to transfer because I only want to read.
+ *
  */
 bool MemoryEEPROM::isWriteEnabled() {
   SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_EEPROM, LOW);
   SPI.transfer(RDSR_EEPROM);
-  byte statusRegister = 0;
-  SPI.transfer(statusRegister);
+  byte statusRegister = SPI.transfer(0x00);
   digitalWrite(CHIP_SELECT_EEPROM, HIGH);
   SPI.endTransaction();
-  return 0x02 & statusRegister == 1;
+  return 0x02 & statusRegister == 0x02;
 }
 
 void MemoryEEPROM::enableWrite() {
@@ -42,7 +44,7 @@ bool MemoryEEPROM::isBusy() {
   SPI.transfer(statusRegister);
   digitalWrite(CHIP_SELECT_EEPROM, HIGH);
   SPI.endTransaction();
-  return 0x01 & statusRegister == 1;
+  return 0x01 & statusRegister == 0x01;
 }
 
 /**
@@ -54,16 +56,16 @@ void MemoryEEPROM::waitUntilReady() {
   SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_EEPROM, LOW);
   SPI.transfer(RDSR_EEPROM);
-  byte statusRegister = 1;
-  while (0x01 & statusRegister == 1) {
+  byte statusRegister = SPI.transfer(0x00);
+  while (0x01 & statusRegister == 0x01) {
     SPI.transfer(statusRegister);
   }
   digitalWrite(CHIP_SELECT_EEPROM, HIGH);
   SPI.endTransaction();
 }
 
-uint8_t MemoryEEPROM::readByte(uint32_t address) {
-  if (address > 262143) {
+uint8_t MemoryEEPROM::readByte(size_t address) {
+  if (address > 262143 || address < 0) {
     Serial.println("Error: Invalid address passed to EEPROM'S readByte(address).");
     return 0;
   }
@@ -72,8 +74,8 @@ uint8_t MemoryEEPROM::readByte(uint32_t address) {
   return memoryOutputByte;
 }
 
-std::array<uint8_t, 256> MemoryEEPROM::readPage(uint32_t lowestAddress) {
-  if (lowestAddress > 261888) {
+std::array<uint8_t, 256> MemoryEEPROM::readPage(size_t lowestAddress) {
+  if (lowestAddress > 261888 || lowestAddress < 0) {
     Serial.println("Error: Invalid lowestAddress passed to EEPROM'S readPage(lowestAddress).");
     return {};
   }
@@ -84,8 +86,8 @@ std::array<uint8_t, 256> MemoryEEPROM::readPage(uint32_t lowestAddress) {
 
 // TODO: check if write enable can apply wwhen memory is not busy or not,
 // in which case an additional check for isBusy() is required beforehand.
-void MemoryEEPROM::writeByte(uint8_t byteToWrite, uint32_t address) {
-  if (address > 262143) {
+void MemoryEEPROM::writeByte(uint8_t byteToWrite, size_t address) {
+  if (address > 262143 || address < 0) {
     Serial.println("Error: Invalid address passed to EEPROM'S writeByte(byteToWriet, address).");
     return;
   }
@@ -96,8 +98,8 @@ void MemoryEEPROM::writeByte(uint8_t byteToWrite, uint32_t address) {
 // TODO: check if write enable can apply wwhen memory is not busy or not,
 // in which case an additional check for isBusy() is required beforehand.
 void MemoryEEPROM::writePage(std::array<uint8_t, 256> content,
-    uint32_t lowestAddress) {
-  if (lowestAddress > 261888) {
+    size_t lowestAddress) {
+  if (lowestAddress > 261888 || lowestAddress < 0) {
     Serial.println("Error: Invalid lowestAddress passed to EEPROM'S writePage(content, address).");
     return;
   }
@@ -112,7 +114,7 @@ void MemoryEEPROM::writePage(std::array<uint8_t, 256> content,
  * byte of address upto 32 bits is simply ignored.
  * 
  */
-void MemoryEEPROM::transferNBytes(uint8_t opcode, uint32_t address, uint8_t* buffer,
+void MemoryEEPROM::transferNBytes(uint8_t opcode, size_t address, uint8_t* buffer,
     int amountOfBytes) {
   SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_EEPROM, LOW);
