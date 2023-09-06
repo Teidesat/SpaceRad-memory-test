@@ -10,6 +10,8 @@
  * from the webpage:
  * https://www.mouser.es/ProductDetail/Winbond/W25N01GVSFIG?qs=qSfuJ%252Bfl%2Fd5wRcUOkRc5Cw%3D%3D
  *
+ * Important NOTE: This NAND Flash only allows 4 partial writes per page.
+ * 
  * The memory array is of 1 Gbit. 65536 (2^16) pages of 2048 (2^11) each ->
  *    -> 2^27 addresses total. There is an operation to delete 64 pages.
  * A block is made up of 64 pages. There are 1024 erasable blocks.
@@ -20,7 +22,7 @@
  * There is one page for unique ID., another for parameter, ten more One
  *    Time Program(OTP) pages.
  *
- * ### Important note:
+ * ### Important NOTE:
  * The NAND Flash allows different pin interpretations that allow standard/dual/quad
  * performance by having 2/2/4 I/O lines (with standard having one input line
  * and another output line, standard SPI that is, which is different from dual,
@@ -46,25 +48,6 @@
  * Make sure to configure SPI on either. Clock stays on 0 or 1 when
  * master is in stand-by-mode and not transfering data.
  *
- * Memory operations are done by instructions.
- *
- * How to write and read:
- *
- * For read instructions, Chip select is set to 0 from 1, then Page Data Read
- * instruction is called, then Chip select back to 1. Then execute the read
- * instruction. Depending on the read mode (Buffer or Continuous, check
- * configuration register), the byte address within page will be relevant
- * or not, and the memory will stop outputting when reaching the end of the
- * addressed page or continue with the next page. Either way, put chip select
- * back to 1 to stop the execution of the instruction. After a read instruction,
- * it is ideal to check ECC-1 and ECC-0 bits from the status register to verify
- * the data integrity (Check table for meaning for the 4 different combinations),
- * data might not be usable.
- * 
- * WIP Chip select must be 1 before a write command. It has to be first
- * set to 0, and then a WREN (Write Enable) command which must be executed
- * first. When looking to end an instruction, Chip select must be put back
- * to 1.
  *
  * #### There are 3 status registers of 1 byte each.
  *
@@ -72,7 +55,7 @@
  * specific instruction for reading and writing to status register.
  *
  * ### SR-1 (Protection Register)
- * 
+ *
  * SRP0 - BP1 - BP2 - BP3 - BP4 - TB - WP-E - SRP1
  *
  * All are volatile; on power loss the current value is lost. But can be One Time
@@ -118,8 +101,8 @@
  *       equal to (1, 1), and OTP-E=1 beforehand)
  *
  * ECC-E = 0 ECC is off.
- * ECC-E = 0 ECC is on. Read instruction checks ECC addresss of each page
- *    for data validation.
+ * ECC-E = 0 ECC is on. (default) Read instruction checks ECC addresss of each
+ *    page for data validation.
  *
  * BUFF = 0 means Buffer Read Mode. Partial page read starting from byte address
  *    within block. Stops after page fully read (output line to high impedance).
@@ -153,6 +136,7 @@
  *    a new instruction can be passed to the memory. Read Status Register and
  *    Read JEDEC ID instructions can be executed even if currently busy.
  *
+ *
  * #### Instructions
  *
  * An instruction is made up of an OPCODE followed by address or dummy bytes
@@ -168,7 +152,7 @@
  * B) x x x x -           Page-Address(16 bits)               - Byte-Address(11 bits)
  * x = irrelevant bit
  *
- * Note: Page with address 0 is the buffer page, which is initialized to all 0
+ * NOTE: Page with address 0 is the buffer page, which is initialized to all 0
  * on power up.
  *
  * There are specific instructions for Standard/Dual/Quad mode read/write
@@ -176,6 +160,11 @@
  *
  * Check the previously mentioned datasheet for a great explanation on the
  * sequences for each instruction.
+ * 
+ * I assume there is only one SPI for all the memories, so that the clock,
+ *  input, output lines are all the same for the different memories, and
+ *  because of that, a single SPI.begin() on the sketch will setup those
+ *  lines for all the memories to use.
  */
 
 #pragma once
@@ -186,21 +175,16 @@
 // Pins
 #define CHIP_SELECT_NAND_FLASH 3
 
-// I assume there is only one SPI for all the memories, so that the clock,
-// input, output lines are all the same for the different memories, and
-// because of that, a single SPI.begin() on the sketch will setup those
-// lines for all the memories to use.
-
-// opcodes
-// WIP not updated, don't use.
-// #define WREN_NAND_FLASH 6
-// #define WRDI_NAND_FLASH 4
-// #define RDSR_NAND_FLASH 15
-// #define WRSR_NAND_FLASH 1
-// #define READ_NAND_FLASH 3
-// #define WRITE_NAND_FLASH 2
-// #define SLEEP_NAND_FLASH 185
-// #define WAKE_NAND_FLASH 171
+// opcodes used
+#define WREN_NAND_FLASH 6
+#define WRDI_NAND_FLASH 4
+#define RDSR_NAND_FLASH 15
+#define WRSR_NAND_FLASH 1
+#define READ_NAND_FLASH 3
+#define PAGE_READ_NAND_FLASH 435
+#define BLOCK_ERASE_NAND_FLASH 216
+#define RANDOM_LOAD_PROGRAM_DATA 132
+#define PROGRAM_EXECUTE 16
 
 #define SPI_TRANSFER_SPEED_NAND_FLASH 104000000 // 104 MHz
 
@@ -233,7 +217,7 @@ public:
    * 
    * Makes no effect on current write cycle; it will be successfuly finished,
    * but there won't be a next write cycle after this method is called.
-   * 
+   *
    */
   void disableWrite();
 
@@ -258,68 +242,140 @@ public:
   void waitUntilReady();
 
   /**
-   * @brief Read a single byte. Most significant is read first.
+   * @brief Activates beyond page addressing for READ automatic address
+   *    increment. READ now starts from first address of the page currently
+   *    in the buffer.
    * 
+   * SR-2's BUF bit=0 means that a READ instruction, which automatically
+   * increments the address from the initial address, can go beyond the page's
+   * maximum address instead of stopping.
+   */
+  void setContinuousMode();
+
+  /**
+   * @brief Activates maximum page address restriction for READ automatic adress
+   *    increment. READ now allows specific address access within the page
+   *    currently loaded into buffer.
+   *
+   * SR-2's BUF bit=1 means that a READ instruction, which automatically
+   * increments the address from the initial address, stops when reaching the
+   * maximum address within the page.
+   */
+  void setBufferMode();
+
+  /**
+   * @brief Read a single byte. Most significant is read first.
+   *
    * Puts the memory in Continuous mode and reads.
+   * 
+   * NOTE: take into account that a page contains 64 bytes for ECC, and the
+   * automatic address increment can output those 64 bytes, which are at the
+   * highest address of the page.
+   * 
+   * TODO: check if the 64 ECC bytes can be accessed.
    *
    * @param address lower than 2^27, since the eeprom's memory array is of
    *  1 GBit.
    * @pre 0 <= address <= 2^27 - 1
+   * @pre Buffer read mode is on (BUF=1 at SR-2) (required in order to access
+   *    specific byte instead of always from start of page)
    */
-  uint8_t readByte(uint32_t address);
+  uint8_t readByte(size_t address);
 
   /**
    * @brief Read N consecutive bytes by incrementing an initialAddress
-   *    N times. Most significant is read first.
+   *    N times. Most significant is read first. Includes 64 ECC bytes.
    *
-   * @param initialAddress lower than 2^27, since the NAND's memory
-   *  array is of 1 GBit. If initialAddress + size > 2^27 then a reset
-   *  to 0 takes place and it keeps going from there.
+   * NOTE: take into account that a page contains 64 bytes for ECC, and the
+   * automatic address increment can output those 64 bytes, which are at the
+   * highest address of the page.
+   * 
+   * TODO: check if the 64 ECC bytes are included in the output.
+   *
+   * @param pageAddress lower than 2^16, since thats the amount of pages
+   *    in the memory array.
    * @param buffer destination of the bytes being read from the NAND.
    * @param size amount of bytes to read.
-   * @pre 0 <= initialAddress <= 2^27 - 1
+   * @pre 0 <= pageAddress <= 2^16 - 1
+   * @pre length(buffer) >= 2112
+   * @pre Memory is not busy
+   * @pre Buffer read mode is on (BUF=1 at SR-2) (required in order to access
+   *    specific byte instead of always from start of page)
    */
-  void readNBytes(uint32_t initialAddress, uint8_t* buffer, int size);
+  void readPage(size_t pageAddress, uint8_t* buffer);
 
   /**
-   * @brief Write a byte.
+   * @brief Loads a page to the buffer. Required before READ instructions.
    * 
-   * Note: write needs to be enabled for the instruction to take effect. Write
-   * is automatically disabled after each write related instruction.
+   * READ instructions need a page load beforehand. Call this before
+   *    accesing a byte that falls within the page.
+   * 
+   * @param pageAddress lower than 2^16, since thats the amount of pages
+   *    in the memory array.
+   * @pre 0 <= pageAddress <= 2^16 - 1
+   * @pre Memory is not busy
+   * @post Memory is temporarily busy
+   */
+  void loadPageIntoBuffer(size_t pageAddress);
+
+  /**
+   * @brief Set bytes of a 128KByte Block to 0xFF and mark them as erased. It 
+   *    is a requirement for a page write. The block that contaisn the addressed
+   *    page is the one to be erased.
    *
-   * @param uint8_t byteToWrite
-   * @param address lower than 2^20, since the eeprom's memory array is of
-   *  8 MBit.
-   * @pre 0 <= address <= 2^27 - 1
+   * NOTE: Write is automatically disabled after each write related instruction.
+   * 
+   * @param pageAddress lower than 2^16, since thats the amount of pages
+   *    in the memory array.
+   * @pre 0 <= pageAddress <= 2^16 - 1
    * @pre Write is enabled
-   * @pre Region to write at is not protected or locked.
+   * @pre Memory is not busy
+   * @pre block is unprotected (TB, BP2, BP1, BP0 flags)
+   * @post Memory is temporarily busy
    */
-  void writeByte(uint8_t byteToWrite, uint32_t address);
+  void eraseBlock(size_t pageAddress);
 
   /**
-   * @brief Write N consecutive bytes by incrementing an initialAddress
-   *    N times.
-   * 
-   * Note: due to the bus being most significant first, then write most
-   *    significant first.
-   * 
-   * Note: write needs to be enabled for the instruction to take effect. Write
-   * is automatically disabled after each write related instruction.
+   * @brief Write A 2112 byte page. Sets page buffer to all 0xFF beforehand.
    *
+   * Important NOTE: Can only be executed 4 times on a single page address.
+   *    (if I understood it correctly, TODO: worth it to verify it.)
+   * 
+   * NOTE: Due to the bus being most significant first, then the bytes to write
+   *    must be ordered in a way that takes into account that.
+   * 
+   * NOTE: Write is automatically disabled after each write related instruction.
+   *
+   * NOTE: If ECC-E = 0, the last 64 ECC bytes can be used, but if ECC-E=1 then
+   * those bytes will be substituted by automatically generated ones, ignoring
+   * the original content for those last 64 bytes of the page to be written.
+   * 
    * @param buffer bytes that will substitute the old bytes in memory.
    * @param size amount of bytes to write.
-   * @param initialAddress lower than 2^27, since the NAND's memory
-   *  array is of 1 GBit. If initialAddress + size > 2^27 then a reset
-   *  to 0 takes place and it keeps going from there.
-   * @pre 0 <= address <= 2^27 - 1
+   * @param pageAddress lower than 2^16, since thats the amount of pages
+   *    in the memory array.
+   * @pre 0 <= pageAddress <= 2^27 - 1
+   * @pre length(buffer) >= 2112
    * @pre Write is enabled
-   * @pre Region to write at is not protected or locked.
+   * @pre Memory is not busy
+   * @pre Page to write at is not protected (TB, BP2, BP1, BP0 flags)
+   * @pre Page has been erased beforehand.
+   * @pre Block is being written from lowest to highest page address.
+   * @post Memory is temporarily busy
    */
-  void writeNBytes(uint8_t* buffer, int size, uint32_t initialAddress);
+  void writePage(uint8_t* buffer, size_t pageAddress);
 
 private:
-  // because readByte, readPage, writeByte, writePage are similar and will
-  // likely stay similar. So this is a auxiliary function for them.
-  void transferNBytes(uint8_t opcode, uint32_t address, uint8_t* buffer,
-      int amountOfBytes);
+
+  /**
+   * @brief Read Protection Register (SR-1), Configuration Register (SR-2) or
+   *    StatusRegister(SR-3)
+   * 
+   * This method never fails even if memory is busy.
+   * 
+   * @param address either 0 or 1 or 2 depending on SR-1, SR-2 or SR-3. (Unsure
+   *    if it's actually 1, 2, 3 respectively.
+   * @return byte of register's content
+   */
+  byte readStatusRegiter(size_t address);
 };

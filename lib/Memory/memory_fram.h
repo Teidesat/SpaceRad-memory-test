@@ -16,6 +16,7 @@
  *
  * The memory array is of 8 Mbit including a special sector of 256 bytes.
  *
+ *
  * #### Because it is SPI based, the pins are the following:
  *    Supply voltage,
  *    Ground,
@@ -25,6 +26,7 @@
  *    not(WriteProtect),
  *    Serial Input,
  *    Serial Output
+ *
  *
  * #### SPI configuration:
  *
@@ -55,7 +57,8 @@
  *  HBN = Change to suspension mode (0.1 mA instead of 600 mA
  *    or 2.95 mA if on standby)
  *
- * How to write and read:
+ *
+ * #### How to write and read:
  * 
  * Chip select must be 1 before a write command. It has to be first
  * set to 0, and then a WREN (Write Enable) command must be first executed.
@@ -68,6 +71,7 @@
  * For read commands, Chip select is set to 0 from 1, then instruction and
  * address are given as multiples of 8 bits. Data is output until chip
  * select is set back to 1.
+ *
  *
  * #### There is a 1 byte status register:
  * WPEN - 1 - 0 - 0 - BP1 - BP2 - WEL - 0
@@ -100,6 +104,7 @@
  * 1   |  1   | 1  |    Protected      |    Unprotected      |    Unprotected
  * Depending on BP1, BP0, the protection varies.
  *
+ *
  * #### Instructions
  *
  * An instruction is made up of an OPCODE followed by address or dummy bytes
@@ -128,6 +133,11 @@
  * 
  * Check the previously mentioned datasheet for a great explanation on the
  * sequences for each instruction. Although it is in chinese.
+ * 
+ * I assume there is only one SPI for all the memories, so that the clock,
+ *  input, output lines are all the same for the different memories, and
+ *  because of that, a single SPI.begin() on the sketch will setup those
+ *  lines for all the memories to use.
  */
 
 #pragma once
@@ -137,11 +147,6 @@
 
 // Pins
 #define CHIP_SELECT_FRAM 3
-
-// I assume there is only one SPI for all the memories, so that the clock,
-// input, output lines are all the same for the different memories, and
-// because of that, a single SPI.begin() on the sketch will setup those
-// lines for all the memories to use.
 
 // opcodes
 #define WREN_FRAM 6
@@ -202,7 +207,7 @@ public:
    *  8 MBit.
    * @pre 0 <= address <= 2^20 - 1
    */
-  uint8_t readByte(uint32_t address);
+  uint8_t readByte(size_t address);
 
   /**
    * @brief Read N consecutive bytes by incrementing an initialAddress
@@ -215,12 +220,12 @@ public:
    * @param size amount of bytes to read.
    * @pre 0 <= initialAddress <= 2^20 - 1
    */
-  void readNBytes(uint32_t initialAddress, uint8_t* buffer, int size);
+  void readNBytes(size_t initialAddress, uint8_t* buffer, int size);
 
   /**
    * @brief Write a byte.
    * 
-   * Note: write needs to be enabled for the instruction to take effect.
+   * NOTE: write needs to be enabled for the instruction to take effect.
    * 
    * Also, if power goes down, the last incompleted byte to write will be lost.
    *
@@ -230,18 +235,18 @@ public:
    * @pre 0 <= address <= 2^20 - 1
    * @pre Region to write at is not protected.
    */
-  void writeByte(uint8_t byteToWrite, uint32_t address);
+  void writeByte(uint8_t byteToWrite, size_t address);
 
   /**
    * @brief Write N consecutive bytes by incrementing an initialAddress
    *    N times.
    * 
-   * Note: due to the bus being most significant first, then write most
+   * NOTE: due to the bus being most significant first, then write most
    *    significant first.
    * 
    * Also, if power goes down, the last incompleted byte to write will be lost.
    * 
-   * Note: write needs to be enabled for the instruction to take effect.
+   * NOTE: write needs to be enabled for the instruction to take effect.
    * 
    * @param buffer bytes that will substitute the old bytes in memory.
    * @param size amount of bytes to write.
@@ -251,7 +256,7 @@ public:
    * @pre 0 <= address <= 2^20 - 1
    * @pre Region to write at is not protected.
    */
-  void writeNBytes(uint8_t* buffer, int size, uint32_t initialAddress);
+  void writeNBytes(uint8_t* buffer, int size, size_t initialAddress);
 
   // Consecutive reads. there is a fast-read instruction version that
   // adds a dummy byte that cannot be 1010XXXX, so 5 bytes total instead
@@ -260,6 +265,6 @@ public:
 private:
   // because readByte, readNBytes, writeByte, writeNBytes are similar and will
   // likely stay similar. So this is a auxiliary function for them.
-  void transferNBytes(uint8_t opcode, uint32_t address, uint8_t* buffer,
+  void transferNBytes(uint8_t opcode, size_t address, uint8_t* buffer,
       int amountOfBytes);
 };

@@ -6,16 +6,17 @@
 /**
  * WEL flag is second from the right on the byte word of the status register,
  * so apply a mask to the status register accordingly.
+ * 
+ * dummy data 0x00 is passed to transfer because I only want to read.
  */
 bool MemoryMRAM::isWriteEnabled() {
   SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_MRAM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_MRAM, LOW);
   SPI.transfer(RDSR_MRAM);
-  byte statusRegister = 0;
-  SPI.transfer(statusRegister);
+  byte statusRegister = SPI.transfer(0x00);
   digitalWrite(CHIP_SELECT_MRAM, HIGH);
   SPI.endTransaction();
-  return 0x02 & statusRegister == 1;
+  return 0x02 & statusRegister == 0x02;
 }
 
 void MemoryMRAM::enableWrite() {
@@ -34,8 +35,8 @@ void MemoryMRAM::disableWrite() {
   SPI.endTransaction();
 }
 
-uint8_t MemoryMRAM::readByte(uint32_t address) {
-  if (address > 1048575) {
+uint8_t MemoryMRAM::readByte(size_t address) {
+  if (address > 1048575 || address < 0) {
     Serial.println("Error: Invalid address passed to MRAM'S readByte(address).");
     return 0;
   }
@@ -44,24 +45,24 @@ uint8_t MemoryMRAM::readByte(uint32_t address) {
   return memoryOutputByte;
 }
 
-void MemoryMRAM::readNBytes(uint32_t initialAddress, uint8_t* buffer, int size) {
-  if (initialAddress > 1048575) {
+void MemoryMRAM::readNBytes(size_t initialAddress, uint8_t* buffer, int size) {
+  if (initialAddress > 1048575 || initialAddress < 0) {
     Serial.println("Error: Invalid initialAddress passed to MRAM'S readNBytes(...).");
     return;
   }
   transferNBytes(READ_MRAM, initialAddress, buffer, size);
 }
 
-void MemoryMRAM::writeByte(uint8_t byteToWrite, uint32_t address) {
-  if (address > 1048575) {
+void MemoryMRAM::writeByte(uint8_t byteToWrite, size_t address) {
+  if (address > 1048575 || address < 0) {
     Serial.println("Error: Invalid address passed to MRAM'S writeByte(byteToWriet, address).");
     return;
   }
   transferNBytes(WRITE_MRAM, address, &byteToWrite, 1);
 }
 
-void MemoryMRAM::writeNBytes(uint8_t* buffer, int size, uint32_t initialAddress) {
-  if (initialAddress > 1048575) {
+void MemoryMRAM::writeNBytes(uint8_t* buffer, int size, size_t initialAddress) {
+  if (initialAddress > 1048575 || initialAddress < 0) {
     Serial.println("Error: Invalid initialAddress passed to MRAM'S writeNBytes(...).");
     return;
   }
@@ -75,7 +76,7 @@ void MemoryMRAM::writeNBytes(uint8_t* buffer, int size, uint32_t initialAddress)
  * byte of address up to 32 bits is simply ignored.
  * 
  */
-void MemoryMRAM::transferNBytes(uint8_t opcode, uint32_t address, uint8_t* buffer,
+void MemoryMRAM::transferNBytes(uint8_t opcode, size_t address, uint8_t* buffer,
     int amountOfBytes) {
   SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_MRAM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_MRAM, LOW);

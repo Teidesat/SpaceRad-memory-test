@@ -12,6 +12,7 @@
  * from the webpage:
  * https://www.mouser.es/ProductDetail/STMicroelectronics/M95M02-DWMN3TP-K?qs=Ok1pvOkw6%2Fr65R3s1i3vIw%3D%3D
  *
+ *
  * #### Because it is SPI based, the pins are the following:
  *    Supply voltage,
  *    Ground,
@@ -25,6 +26,7 @@
  * When HOLD is 0 the memory goes into stand-by mode and the output
  * stays at high impendance, whiel also ignoring input from the bus.
  *
+ *
  * #### SPI configuration:
  *
  * Transmission speed must be set to either 10 MHz (10000000 on SPIConfig object) or
@@ -37,12 +39,14 @@
  * Make sure to configure SPI on either. Clock stays on 0 or 1 when
  * master is in stand-by-mode and not transfering data.
  *
+ *
  * #### Memory operations are done by commands:
  *  - WRITE, WRSR, WRID, LID...
  *  - READ, RDSR, RDID, RDLS...
  *  etc...
  *
- * How to write and read:
+ *
+ * #### How to write and read:
  *
  * Chip select must be 1 before a write command. It has to be first
  * set to 0, and then a WREN (Write Enable) command must be first executed.
@@ -86,9 +90,11 @@
  *    1     |   0      | Status Register is write-protected.
  * Depending on BP1, BP0, the protected addresses vary.
  *
+ *
  * #### There is also an identification page on the EEPROM:
  * id (3 bytes) - app params. (rest, could be used for app. data)
  * Id. field contains ST Manufacturer code, SPI Family Code, Memory Density Code.
+ *
  *
  * #### Instructions
  * 
@@ -109,6 +115,11 @@
  *
  * Check the previously mentioned datasheet for a great explanation on the
  * sequences for each instruction.
+ * 
+ * I assume there is only one SPI for all the memories, so that the clock,
+ *  input, output lines are all the same for the different memories, and
+ *  because of that, a single SPI.begin() on the sketch will setup those
+ *  lines for all the memories to use.
  */
 
 #pragma once
@@ -118,11 +129,6 @@
 
 // Pins
 #define CHIP_SELECT_EEPROM 3
-
-// I assume there is only one SPI for all the memories, so that the clock,
-// input, output lines are all the same for the different memories, and
-// because of that, a single SPI.begin() on the sketch will setup those
-// lines for all the memories to use.
 
 // opcodes
 #define WREN_EEPROM 6
@@ -159,7 +165,7 @@ public:
    * @brief Status register has a WEL flag that at 1 allows memory to be written,
    * but at 0 it does not allow it. This changes the flag to 1.
    * 
-   * Note: this will fail if the memory is currently in a write cycle.
+   * NOTE: this will fail if the memory is currently in a write cycle.
    * @pre Memory not busy
    */
   void enableWrite();
@@ -171,7 +177,7 @@ public:
    * Makes no effect on current write cycle; it will be successfuly finished,
    * but there won't be a next write cycle after this method is called.
    * 
-   * Note: this will fail if the memory is currently in a write cycle.
+   * NOTE: this will fail if the memory is currently in a write cycle.
    * @pre Memory not busy
    */
   void disableWrite();
@@ -200,7 +206,7 @@ public:
   /**
    * @brief read a single byte. Most significant is read first.
    * 
-   * Note: when the memory is busy writing something, a read cannot be performed,
+   * NOTE: when the memory is busy writing something, a read cannot be performed,
    * so make sure to check if memory is busy beforehand.
    * 
    * @param address lower than 2^18, since the eeprom's memory array is of
@@ -208,14 +214,14 @@ public:
    * @pre 0 <= address <= 2^18 - 1
    * @pre Memory is not busy
    */
-  uint8_t readByte(uint32_t address);
+  uint8_t readByte(size_t address);
 
   /**
    * @brief read a page. Most significant is read first.
    * 
    * In this EEPROM, pages are of size 256 byte.
    * 
-   * Note: when the memory is busy writing something, a read cannot be performed,
+   * NOTE: when the memory is busy writing something, a read cannot be performed,
    * so make sure to check if memory is busy beforehand.
    * 
    * @param lowestAddress lower than (2^18 - 255), since the eeprom's memory
@@ -223,7 +229,7 @@ public:
    * to read the whole 256 byte page.
    * @pre 0 <= lowestAddress <= ((2^18 - 1) - 255)
    */
-  std::array<uint8_t, 256> readPage(uint32_t lowestAddress);
+  std::array<uint8_t, 256> readPage(size_t lowestAddress);
 
   /**
    * @brief Write a byte.
@@ -235,7 +241,7 @@ public:
    * @pre Memory not busy.
    * @pre Region to write at is not protected.
    */
-  void writeByte(uint8_t byteToWrite, uint32_t address);
+  void writeByte(uint8_t byteToWrite, size_t address);
 
   /**
    * @brief write a page with a single internal Write cycle.
@@ -250,11 +256,11 @@ public:
    * @pre Memory not busy.
    * @pre Region to write at is not protected.
    */
-  void writePage(std::array<uint8_t, 256> content, uint32_t lowestAddress);
+  void writePage(std::array<uint8_t, 256> content, size_t lowestAddress);
 
 private:
   // because readByte, readPage, writeByte, writePage are similar and will
   // likely stay similar. So this is a auxiliary function for them.
-  void transferNBytes(uint8_t opcode, uint32_t address, uint8_t* buffer,
+  void transferNBytes(uint8_t opcode, size_t address, uint8_t* buffer,
       int amountOfBytes);
 };
