@@ -22,7 +22,7 @@ An arduino chip is to be connected with the following board:
  
  - Implement fast read in FRAM memory class. 30/8/2023.
  
- - Expand [NANDFlash](lib/Memory/memory_nand_flash.h) class definition for dual and quad variants for read and  write methods. 5/9/2023
+ - Expand [NANDFlash](lib/Memory/memory_nand_flash.h) class definition with read methods for dual and quad transmission modes. 5/9/2023
  
  - Update [NAND Flash](lib/Memory/memory_nand_flash.h)'s interface to allow buffer mode read/write. 5/9/2023
  
