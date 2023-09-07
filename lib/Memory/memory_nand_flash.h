@@ -101,7 +101,7 @@
  *       equal to (1, 1), and OTP-E=1 beforehand)
  *
  * ECC-E = 0 ECC is off.
- * ECC-E = 0 ECC is on. (default) Read instruction checks ECC addresss of each
+ * ECC-E = 1 ECC is on. (default) Read instruction checks ECC addresss of each
  *    page for data validation.
  *
  * BUFF = 0 means Buffer Read Mode. Partial page read starting from byte address
