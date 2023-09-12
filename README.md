@@ -8,6 +8,14 @@ An arduino chip is to be connected with the following board:
 
 ![docs/breaktout_board.png](docs/breakout_board.png)
 
+## How to build
+
+Four main files at <code>src/</code> represent each a build target for platform.io, one for each memory type. Using VSCode and PlatformIO Extension head to PlatformIO extension's interface and press build on demand when looking into executing one of those main files.
+
+![EEPROM build example](docs/build_example_eeprom.PNG)
+
+Upload and monitor altenatively once an arduino has been connected to the computer.
+
 ## TODO
 
  - Find a better way to have independent sketch main files in <code>src/</code> so that they can be compiled independently. Current approach involves excluding specific main files in the [platformio.ini](platformio.ini) depending on the build target, but if a new main file is added to <code>src/</code> while not being aware of the approach then build problems will arise.
