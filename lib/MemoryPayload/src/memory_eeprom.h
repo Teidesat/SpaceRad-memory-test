@@ -239,7 +239,9 @@ public:
    *  256 Kbyte.
    * @pre 0 <= address <= 2^18 - 1
    * @pre Memory not busy.
+   * @pre Write is enabled
    * @pre Region to write at is not protected.
+   * @post Memory is busy writing
    */
   void writeByte(uint8_t byteToWrite, size_t address);
 
@@ -254,7 +256,9 @@ public:
    * to read the whole 256 byte page.
    * @pre 0 <= lowestAddress <= ((2^18 - 1) - 255)
    * @pre Memory not busy.
+   * @pre Write is enabled
    * @pre Region to write at is not protected.
+   * @post Memory is busy writing
    */
   void writePage(std::array<uint8_t, 256> content, size_t lowestAddress);
 

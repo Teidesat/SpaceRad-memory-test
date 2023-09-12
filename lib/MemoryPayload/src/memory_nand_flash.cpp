@@ -70,7 +70,7 @@ void MemoryNANDFlash::waitUntilReady() {
 void MemoryNANDFlash::setContinuousMode() {
   SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_NAND_FLASH, MSBFIRST, SPI_MODE0));
   byte configRegister = readStatusRegiter(1);
-  delay(10); // unsure if necessary, but it's a high to low immediately
+  delay(1); // unsure if necessary, but it's a high to low immediately
   byte newConfigRegister = (configRegister & 0xFE);
   digitalWrite(CHIP_SELECT_NAND_FLASH, LOW);
   SPI.transfer(WRSR_NAND_FLASH);
@@ -86,7 +86,7 @@ void MemoryNANDFlash::setContinuousMode() {
 void MemoryNANDFlash::setBufferMode() {
   SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_NAND_FLASH, MSBFIRST, SPI_MODE0));
   byte configRegister = readStatusRegiter(1);
-  delay(10); // unsure if necessary, but it's a high to low immediately
+  delay(1); // unsure if necessary, but it's a high to low immediately
   byte newConfigRegister = (configRegister | 0x01);
   digitalWrite(CHIP_SELECT_NAND_FLASH, LOW);
   SPI.transfer(WRSR_NAND_FLASH);
@@ -126,7 +126,9 @@ void MemoryNANDFlash::readPage(size_t pageAddress, uint8_t* buffer) {
     return;
   }
   loadPageIntoBuffer(pageAddress);
+  delay(1); // unsure if needed
   waitUntilReady();
+  delay(1); // unsure if needed
   SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_NAND_FLASH, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_NAND_FLASH, LOW);
   SPI.transfer(READ_NAND_FLASH);
@@ -165,7 +167,7 @@ void MemoryNANDFlash::writePage(uint8_t* buffer, size_t pageAddress) {
   SPI.transfer16(0x00); // start from address 0 of buffer page
   SPI.transfer(buffer, 2112);
   digitalWrite(CHIP_SELECT_NAND_FLASH, HIGH);
-  delay(10); // unsure if needed
+  delay(1); // unsure if needed
   digitalWrite(CHIP_SELECT_NAND_FLASH, LOW);
   SPI.transfer(PROGRAM_EXECUTE);
   SPI.transfer(0x00); // dummy
