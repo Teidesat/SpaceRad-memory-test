@@ -171,6 +171,7 @@
 
 #include <stdint.h> // to avoid uint8_t unknown type syntax highlight error
 #include <array>
+#include <Arduino.h>
 
 // Pins
 #define CHIP_SELECT_NAND_FLASH 3
@@ -354,13 +355,14 @@ public:
    * @param size amount of bytes to write.
    * @param pageAddress lower than 2^16, since thats the amount of pages
    *    in the memory array.
-   * @pre 0 <= pageAddress <= 2^27 - 1
+   * @pre 0 <= pageAddress <= 2^16 - 1
    * @pre length(buffer) >= 2112
    * @pre Write is enabled
    * @pre Memory is not busy
    * @pre Page to write at is not protected (TB, BP2, BP1, BP0 flags)
    * @pre Page has been erased beforehand.
    * @pre Block is being written from lowest to highest page address.
+   * @post Page no longer in "erased" state.
    * @post Memory is temporarily busy
    */
   void writePage(uint8_t* buffer, size_t pageAddress);

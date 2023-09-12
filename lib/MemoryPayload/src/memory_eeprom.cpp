@@ -84,14 +84,14 @@ std::array<uint8_t, 256> MemoryEEPROM::readPage(size_t lowestAddress) {
   return memoryOutputPage;
 }
 
-// TODO: check if write enable can apply wwhen memory is not busy or not,
+// TODO: check if write enable can apply when memory is not busy or not,
 // in which case an additional check for isBusy() is required beforehand.
 void MemoryEEPROM::writeByte(uint8_t byteToWrite, size_t address) {
   if (address > 262143 || address < 0) {
     Serial.println("Error: Invalid address passed to EEPROM'S writeByte(byteToWriet, address).");
     return;
   }
-  enableWrite();
+  delay(1); // unsure if needed
   transferNBytes(WRITE_EEPROM, address, &byteToWrite, 1);
 }
 
@@ -103,7 +103,7 @@ void MemoryEEPROM::writePage(std::array<uint8_t, 256> content,
     Serial.println("Error: Invalid lowestAddress passed to EEPROM'S writePage(content, address).");
     return;
   }
-  enableWrite();
+  delay(1); // unsure if needed
   transferNBytes(WRITE_EEPROM, lowestAddress, &content[0], 256);
 }
 
