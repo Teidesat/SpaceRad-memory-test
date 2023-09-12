@@ -126,7 +126,9 @@ void MemoryNANDFlash::readPage(size_t pageAddress, uint8_t* buffer) {
     return;
   }
   loadPageIntoBuffer(pageAddress);
+  delay(1); // unsure if needed
   waitUntilReady();
+  delay(1); // unsure if needed
   SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_NAND_FLASH, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_NAND_FLASH, LOW);
   SPI.transfer(READ_NAND_FLASH);
