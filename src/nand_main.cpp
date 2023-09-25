@@ -18,7 +18,7 @@
 
 MemoryNANDFlash nand;
 
-std::array<uint8_t, 2112> obtainedPage = {};
+Array<uint8_t, 2112> obtainedPage = {};
 
 void setup() {
   SPI.begin();
@@ -26,7 +26,7 @@ void setup() {
   delay(5); // after 5 ms device is fully accessible
   nand.enableWrite();
   delay(1);
-  std::array<uint8_t, 2112> pageToWrite = {};
+  Array<uint8_t, 2112> pageToWrite = {};
   for (size_t i = 0; i < 2112; ++i) { // I want to change values to any non default
     pageToWrite[i] = (i + 1) % 256;
   }

@@ -124,8 +124,9 @@
 
 #pragma once
 
+#include <Arduino.h>
 #include <stdint.h> // to avoid uint8_t unknown type syntax highlight error
-#include <array>
+#include <Array.h>
 
 // Pins
 #define CHIP_SELECT_EEPROM 3
@@ -229,7 +230,7 @@ public:
    * to read the whole 256 byte page.
    * @pre 0 <= lowestAddress <= ((2^18 - 1) - 255)
    */
-  std::array<uint8_t, 256> readPage(size_t lowestAddress);
+  Array<uint8_t, 256> readPage(size_t lowestAddress);
 
   /**
    * @brief Write a byte.
@@ -260,7 +261,7 @@ public:
    * @pre Region to write at is not protected.
    * @post Memory is busy writing
    */
-  void writePage(std::array<uint8_t, 256> content, size_t lowestAddress);
+  void writePage(Array<uint8_t, 256> content, size_t lowestAddress);
 
 private:
   // because readByte, readPage, writeByte, writePage are similar and will

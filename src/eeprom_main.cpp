@@ -9,8 +9,8 @@
  * 
  */
 
-#include <Arduino.h>
 #include <memory_eeprom.h>
+#include <Arduino.h>
 
 #include "SPI.h"
 
