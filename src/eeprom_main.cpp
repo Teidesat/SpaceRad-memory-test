@@ -20,16 +20,12 @@ MemoryEEPROM eeprom;
 
 uint8_t obtainedByte = 0x66; // dummy value
 
-#define HSPI_MISO   12
-#define HSPI_MOSI   13
-#define HSPI_SCLK   14
-
 bool enabled;
 
 void setup() {
   pinMode(CHIP_SELECT_EEPROM, OUTPUT);
   SPIClass hspi(HSPI); // ESP32 apparently requires to declare which SPI instance to use
-  hspi.begin(HSPI_SCLK, HSPI_MISO, HSPI_MOSI, CHIP_SELECT_EEPROM);
+  hspi.begin();
   Serial.begin(9600);
   delay(1000);
   eeprom.enableWrite();
