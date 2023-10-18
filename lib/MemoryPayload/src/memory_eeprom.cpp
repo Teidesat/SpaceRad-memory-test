@@ -1,7 +1,6 @@
 #include "./memory_eeprom.h"
 
 #include <Arduino.h>
-#include "SPI.h"
 
 /**
  * WEL flag is second from the right on the byte word of the status register,
@@ -11,39 +10,39 @@
  *
  */
 bool MemoryEEPROM::isWriteEnabled() {
-  SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
+  hspi.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_EEPROM, LOW);
-  SPI.transfer(RDSR_EEPROM);
-  byte statusRegister = SPI.transfer(0x00);
+  hspi.transfer(RDSR_EEPROM);
+  byte statusRegister = hspi.transfer(0x00);
   digitalWrite(CHIP_SELECT_EEPROM, HIGH);
-  SPI.endTransaction();
+  hspi.endTransaction();
   return 0x02 & statusRegister == 0x02;
 }
 
 void MemoryEEPROM::enableWrite() {
-  SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
+  hspi.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_EEPROM, LOW);
-  SPI.transfer(WREN_EEPROM);
+  hspi.transfer(WREN_EEPROM);
   digitalWrite(CHIP_SELECT_EEPROM, HIGH);
-  SPI.endTransaction();
+  hspi.endTransaction();
 }
 
 void MemoryEEPROM::disableWrite() {
-  SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
+  hspi.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_EEPROM, LOW);
-  SPI.transfer(WRDI_EEPROM);
+  hspi.transfer(WRDI_EEPROM);
   digitalWrite(CHIP_SELECT_EEPROM, HIGH);
-  SPI.endTransaction();
+  hspi.endTransaction();
 }
 
 bool MemoryEEPROM::isBusy() {
-  SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
+  hspi.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_EEPROM, LOW);
-  SPI.transfer(RDSR_EEPROM);
+  hspi.transfer(RDSR_EEPROM);
   byte statusRegister = 0;
-  SPI.transfer(statusRegister);
+  hspi.transfer(statusRegister);
   digitalWrite(CHIP_SELECT_EEPROM, HIGH);
-  SPI.endTransaction();
+  hspi.endTransaction();
   return 0x01 & statusRegister == 0x01;
 }
 
@@ -53,15 +52,15 @@ bool MemoryEEPROM::isBusy() {
  * instruction once and check the output continually.
 */
 void MemoryEEPROM::waitUntilReady() {
-  SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
+  hspi.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_EEPROM, LOW);
-  SPI.transfer(RDSR_EEPROM);
-  byte statusRegister = SPI.transfer(0x00);
+  hspi.transfer(RDSR_EEPROM);
+  byte statusRegister = hspi.transfer(0x00);
   while (0x01 & statusRegister == 0x01) {
-    SPI.transfer(statusRegister);
+    hspi.transfer(statusRegister);
   }
   digitalWrite(CHIP_SELECT_EEPROM, HIGH);
-  SPI.endTransaction();
+  hspi.endTransaction();
 }
 
 uint8_t MemoryEEPROM::readByte(size_t address) {
@@ -116,13 +115,13 @@ void MemoryEEPROM::writePage(Array<uint8_t, 256> content,
  */
 void MemoryEEPROM::transferNBytes(uint8_t opcode, size_t address, uint8_t* buffer,
     int amountOfBytes) {
-  SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
+  hspi.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_EEPROM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_EEPROM, LOW);
-  SPI.transfer(opcode);
-  SPI.transfer((byte)(address >> 16));
-  SPI.transfer((byte)(address >> 8));
-  SPI.transfer((byte)address);
-  SPI.transfer(&buffer, amountOfBytes);
+  hspi.transfer(opcode);
+  hspi.transfer((byte)(address >> 16));
+  hspi.transfer((byte)(address >> 8));
+  hspi.transfer((byte)address);
+  hspi.transfer(&buffer, amountOfBytes);
   digitalWrite(CHIP_SELECT_EEPROM, HIGH);
-  SPI.endTransaction();
+  hspi.endTransaction();
 }

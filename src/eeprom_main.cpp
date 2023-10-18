@@ -12,8 +12,6 @@
 #include <memory_eeprom.h>
 #include <Arduino.h>
 
-#include "SPI.h"
-
 // **** first update chip select pins on the class ****
 
 MemoryEEPROM eeprom;
@@ -22,9 +20,10 @@ uint8_t obtainedByte = 0x66; // dummy value
 
 bool enabled;
 
+SPIClass hspi(HSPI);
+
 void setup() {
   pinMode(CHIP_SELECT_EEPROM, OUTPUT);
-  SPIClass hspi(HSPI); // ESP32 apparently requires to declare which SPI instance to use
   hspi.begin();
   Serial.begin(9600);
   delay(1000);

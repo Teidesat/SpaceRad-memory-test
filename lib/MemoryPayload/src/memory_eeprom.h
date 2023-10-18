@@ -127,6 +127,7 @@
 #include <Arduino.h>
 #include <stdint.h> // to avoid uint8_t unknown type syntax highlight error
 #include <Array.h>
+#include <SPI.h>
 
 // Pins
 #define CHIP_SELECT_EEPROM 18
@@ -144,6 +145,8 @@
 // #define LID 130
 
 #define SPI_TRANSFER_SPEED_EEPROM 5000000 // 5 MHz assuming 3.3 V
+
+extern SPIClass hspi;
 
 class MemoryEEPROM {
 public:
