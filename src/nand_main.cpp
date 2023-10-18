@@ -21,6 +21,7 @@ MemoryNANDFlash nand;
 Array<uint8_t, 2112> obtainedPage = {};
 
 void setup() {
+  pinMode(CHIP_SELECT_NAND_FLASH, OUTPUT);
   SPI.begin();
   Serial.begin(9600);
   delay(5); // after 5 ms device is fully accessible

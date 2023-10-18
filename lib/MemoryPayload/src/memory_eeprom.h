@@ -129,7 +129,7 @@
 #include <Array.h>
 
 // Pins
-#define CHIP_SELECT_EEPROM 3
+#define CHIP_SELECT_EEPROM 18
 
 // opcodes
 #define WREN_EEPROM 6
