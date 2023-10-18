@@ -21,6 +21,7 @@ MemoryFRAM fram;
 uint8_t obtainedByte = 0x66; // dummy value
 
 void setup() {
+  pinMode(CHIP_SELECT_FRAM, OUTPUT);
   SPI.begin();
   Serial.begin(9600);
   delay(1000); // TODO: datasheet in chinese, unsure of powerup delay.

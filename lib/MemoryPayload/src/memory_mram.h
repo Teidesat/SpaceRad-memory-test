@@ -138,8 +138,9 @@
 
 #pragma once
 
+#include <Arduino.h>
 #include <stdint.h> // to avoid uint8_t unknown type syntax highlight error
-#include <array>
+#include <Array.h>
 
 // Pins
 #define CHIP_SELECT_MRAM 3

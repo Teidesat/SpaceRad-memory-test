@@ -145,9 +145,9 @@
 
 #pragma once
 
-#include <stdint.h> // to avoid uint8_t unknown type syntax highlight error
-#include <array>
 #include <Arduino.h>
+#include <stdint.h> // to avoid uint8_t unknown type syntax highlight error
+#include <Array.h>
 
 // Pins
 #define CHIP_SELECT_NAND_FLASH 3

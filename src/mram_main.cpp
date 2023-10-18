@@ -21,6 +21,7 @@ MemoryMRAM mram;
 uint8_t obtainedByte = 0x66; // dummy value
 
 void setup() {
+  pinMode(CHIP_SELECT_MRAM, OUTPUT);
   SPI.begin();
   Serial.begin(9600);
   delay(400); // minimum wait times according to datasheet
