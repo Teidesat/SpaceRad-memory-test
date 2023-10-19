@@ -10,29 +10,29 @@
  * dummy data 0x00 is passed to transfer because I only want to read.
  */
 bool MemoryFRAM::isWriteEnabled() {
-  hspi.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_FRAM, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_FRAM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_FRAM, LOW);
-  hspi.transfer(RDSR_FRAM);
-  byte statusRegister = hspi.transfer(0x00);
+  SPI.transfer(RDSR_FRAM);
+  byte statusRegister = SPI.transfer(0x00);
   digitalWrite(CHIP_SELECT_FRAM, HIGH);
-  hspi.endTransaction();
+  SPI.endTransaction();
   return 0x02 & statusRegister == 0x02;
 }
 
 void MemoryFRAM::enableWrite() {
-  hspi.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_FRAM, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_FRAM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_FRAM, LOW);
-  hspi.transfer(WREN_FRAM);
+  SPI.transfer(WREN_FRAM);
   digitalWrite(CHIP_SELECT_FRAM, HIGH);
-  hspi.endTransaction();
+  SPI.endTransaction();
 }
 
 void MemoryFRAM::disableWrite() {
-  hspi.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_FRAM, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_FRAM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_FRAM, LOW);
-  hspi.transfer(WRDI_FRAM);
+  SPI.transfer(WRDI_FRAM);
   digitalWrite(CHIP_SELECT_FRAM, HIGH);
-  hspi.endTransaction();
+  SPI.endTransaction();
 }
 
 uint8_t MemoryFRAM::readByte(size_t address) {
@@ -80,13 +80,13 @@ void MemoryFRAM::writeNBytes(uint8_t* buffer, int size, size_t initialAddress) {
  */
 void MemoryFRAM::transferNBytes(uint8_t opcode, size_t address, uint8_t* buffer,
     int amountOfBytes) {
-  hspi.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_FRAM, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_FRAM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_FRAM, LOW);
-  hspi.transfer(opcode);
-  hspi.transfer((byte)(address >> 16));
-  hspi.transfer((byte)(address >> 8));
-  hspi.transfer((byte)address);
-  hspi.transfer(&buffer, amountOfBytes);
+  SPI.transfer(opcode);
+  SPI.transfer((byte)(address >> 16));
+  SPI.transfer((byte)(address >> 8));
+  SPI.transfer((byte)address);
+  SPI.transfer(&buffer, amountOfBytes);
   digitalWrite(CHIP_SELECT_FRAM, HIGH);
-  hspi.endTransaction();
+  SPI.endTransaction();
 }

@@ -169,8 +169,6 @@
 
 #define SPI_TRANSFER_SPEED_FRAM 8000000 // 8 MHz typical
 
-extern SPIClass hspi;
-
 class MemoryFRAM {
 public:
   MemoryFRAM() {}

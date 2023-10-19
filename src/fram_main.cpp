@@ -20,11 +20,9 @@ MemoryFRAM fram;
 
 uint8_t obtainedByte = 0x66; // dummy value
 
-SPIClass hspi(HSPI);
-
 void setup() {
   pinMode(CHIP_SELECT_FRAM, OUTPUT);
-  hspi.begin();
+  SPI.begin();
   Serial.begin(9600);
   delay(1000); // TODO: datasheet in chinese, unsure of powerup delay.
   fram.enableWrite();
@@ -35,6 +33,8 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("Obtained byte value from FRAM read operation: ");
+  Serial.print("Obtained byte value from FRAM read operation: ");
+  Serial.print(obtainedByte);
+  Serial.println();
   delay(1000);
 }
