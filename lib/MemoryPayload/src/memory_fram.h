@@ -145,9 +145,10 @@
 #include <Arduino.h>
 #include <stdint.h> // to avoid uint8_t unknown type syntax highlight error
 #include <Array.h>
+#include <SPI.h>
 
 // Pins
-#define CHIP_SELECT_FRAM 3
+#define CHIP_SELECT_FRAM 18
 
 // opcodes
 #define WREN_FRAM 6
@@ -167,6 +168,8 @@
 #define HBN_FRAM 185
 
 #define SPI_TRANSFER_SPEED_FRAM 8000000 // 8 MHz typical
+
+extern SPIClass hspi;
 
 class MemoryFRAM {
 public:
