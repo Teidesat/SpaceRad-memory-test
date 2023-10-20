@@ -148,7 +148,7 @@
 #include <SPI.h>
 
 // Pins
-#define CHIP_SELECT_FRAM 18
+#define CHIP_SELECT_FRAM 22
 
 // opcodes
 #define WREN_FRAM 6
