@@ -12,8 +12,7 @@
 bool MemoryFRAM::isWriteEnabled() {
   SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_FRAM, MSBFIRST, SPI_MODE0));
   digitalWrite(CHIP_SELECT_FRAM, LOW);
-  SPI.transfer(RDSR_FRAM);
-  byte statusRegister = SPI.transfer(0x00);
+  byte statusRegister = SPI.transfer(RDSR_FRAM);
   digitalWrite(CHIP_SELECT_FRAM, HIGH);
   SPI.endTransaction();
   return 0x02 & statusRegister == 0x02;
