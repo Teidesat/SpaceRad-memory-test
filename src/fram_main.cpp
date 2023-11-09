@@ -10,14 +10,14 @@
  */
 
 #include <Arduino.h>
+
 #include <memory_fram.h>
+#include <SPIMemory.h>
 
 #include "SPI.h"
 #include "Array.h"
 
 // **** first update chip select pins on the class ****
-
-MemoryFRAM fram;
 
 uint8_t obtainedByte = 0x66; // dummy value
 bool enabled;
@@ -25,61 +25,35 @@ bool enabled;
 uint8_t obtainedValue = 0x00;
 Array<uint8_t, 256> outputBuffer{};
 
+int8_t kClock = 18;
+int8_t kOutput = 19;
+int8_t kInput = 23;
+int8_t kChipSelect = CHIP_SELECT_FRAM;
+
+
+
+bool readSerialStr(String &inputStr);
+
+int memoryCapacity;
+
 void setup() {
-  pinMode(CHIP_SELECT_FRAM, OUTPUT);
-  SPI.begin();
+  int8_t pins[4];
+  pins[0] = kClock;
+  pins[1] = kOutput;
+  pins[2] = kInput;
+  pins[3] = kChipSelect;
+  SPIFlash flash(pins[0]);
+
   Serial.begin(9600);
-  // delay(1000); // TODO: datasheet in chinese, unsure of powerup delay.
-  // fram.enableWrite();
-  // delay(1);
-  // enabled = fram.isWriteEnabled();
-  // const uint8_t kByteToWrite = 0x83;
-  // fram.writeByte(kByteToWrite, 22222); // arbitrary address
-  // obtainedByte = fram.readByte(22222);
-  delay(1000);
-  uint8_t valueToWrite = 0x76;
-  Array<uint8_t, 256> buffer{};
-  for (int i = 0; i < 256; i++) {
-    buffer[i] = i;
-  }
-  SPI.beginTransaction(SPISettings(SPI_TRANSFER_SPEED_FRAM, MSBFIRST, SPI_MODE0));
-  for (int i = 0; i < 256; i++) {
-    outputBuffer[i] = SPI.transfer(buffer[i]);
-  }
-  SPI.endTransaction();
+  flash.begin();
+
+  delay(2000);
+
+  memoryCapacity = flash.getUniqueID();
 }
 
 void loop() {
-  Serial.println("Written array: ");
-  for (int i = 0; i < 256; i++) {
-    Serial.print(outputBuffer[i]);
-    Serial.print(" ");
-    if (i % 80 == 0) {
-      Serial.println();
-    }
-  }
-  Serial.println();
-  // Serial.print("Obtained byte value from FRAM read operation: ");
-  // Serial.print(obtainedByte);
-  // Serial.println();
-  // if (enabled) {
-  //   Serial.println("Write enabled");
-  // } else {
-  //   Serial.println("Write disabled");
-  // }
-
-  // Serial.print("OUTPUT: ");
-  // Serial.print(MISO);
-  // Serial.println();
-  // Serial.print("INPUT: ");
-  // Serial.print(MOSI);
-  // Serial.println();
-  // Serial.print("CLOCK: ");
-  // Serial.print(SCK);
-  // Serial.println();
-  // Serial.print("SS: ");
-  // Serial.print(SS);
-  // Serial.println();
-
+  Serial.println("Memory capacity: ");
+  Serial.print(memoryCapacity);
   delay(1000);
 }
